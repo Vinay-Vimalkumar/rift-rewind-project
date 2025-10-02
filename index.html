@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinay Vimalkumar - Personal Website</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <img src="profile.png" alt="Vinay Vimalkumar" class="profile-photo">
+            <h1>Vinay Vimalkumar</h1>
+            <p class="tagline">Cybersecurity Enthusiast & Cloud Builder</p>
+            <a href="https://builder.aws.com/community/@rumblycascade7" target="_blank" class="aws-link">AWS Builder Center Profile</a>
+        </section>
+
+        <section class="fun-facts">
+            <h3>Fun Facts About Me</h3>
+            <div class="facts-grid">
+                <div class="fact-card">
+                    <h4>🚀 Hackathon Coder</h4>
+                    <p>I’ve built AI and cybersecurity projects at hackathons, pulling all-nighters with my team.</p>
+                </div>
+                <div class="fact-card">
+                    <h4>🎾 Varsity Tennis</h4>
+                    <p>I’ve played competitive tennis for years — it balances out the hours I spend at the computer.</p>
+                </div>
+                <div class="fact-card">
+                    <h4>💡 CTF Player</h4>
+                    <p>I compete in Capture the Flag competitions, solving crypto and binary puzzles for fun.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="aws-journey">
+            <h3>AWS Builder Challenge</h3>
+            <p>I'm currently working on the Rift Rewind Hackathon, learning to deploy websites using AWS S3 and CloudFront. This site is part of my challenge progress!</p>
+            <a href="https://builder.aws.com/content/31C2WxIDSQive7q2Dv5xNFCmYJj/aws-builder-challenge-2-build-a-website-on-the-cloud?trk=86c76c09-e8f4-4138-badc-604ce7bc5d77&sc_channel=el" target="_blank" class="cta-button">View Challenge Details</a>
+        </section>
+
+        <!-- CONTACT FORM SECTION -->
+        <section class="contact-form">
+            <h3>Get In Touch</h3>
+            <p>Have a question or want to connect? Send me a message!</p>
+            <div id="form-message" class="form-message" style="display: none;"></div>
+            <form class="contact-form-container">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="contact-submit-btn">Send Message</button>
+            </form>
+        </section>
+        <!-- END CONTACT FORM SECTION -->
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Vinay Vimalkumar. Built with ❤️ on AWS</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
