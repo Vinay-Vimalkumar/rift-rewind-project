@@ -125,11 +125,12 @@
     </footer>
   </div>
 
-  <script src="./script.js"></script>
+  <!-- Set the API URL BEFORE loading script.js -->
   <script>
-    // Keep in HTML as a single source of truth if you like:
     const RIOT_API_URL = "https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";
-    window.__RIOT_API_URL__ = RIOT_API_URL; // expose for script.js if needed
+    window.__RIOT_API_URL__ = RIOT_API_URL;
   </script>
+  <!-- Cache-bust to force browsers to fetch the newest JS -->
+  <script src="./script.js?v=3"></script>
 </body>
 </html>
