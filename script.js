@@ -1,185 +1,137 @@
-// ====== CONFIG: your Lambda Function URL ======
-const LAMBDA_URL = 'https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/';
+// === configuration (your deployed Lambda Function URL) ===
+const LAMBDA_URL =
+  (window && window.__RIOT_API_URL__) ||
+  "https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";
 
-// ====== Riot region mapping (platform -> routing for account API) ======
-const REGION_TO_ROUTING = {
-  na1: 'americas',
-  br1: 'americas',
-  la1: 'americas',
-  la2: 'americas',
-  euw1: 'europe',
-  eun1: 'europe',
-  tr1: 'europe',
-  ru:  'europe',
-  kr:  'asia',
-  jp1: 'asia',
-  oc1: 'sea',
-  ph2: 'sea',
-  sg2: 'sea',
-  th2: 'sea',
-  tw2: 'sea',
-  vn2: 'sea'
+// --- helpers ---
+const $ = (q) => document.querySelector(q);
+
+function setStatus(el, msg, kind = "muted") {
+  el.textContent = msg || "";
+  el.classList.remove("ok", "err");
+  if (kind === "ok") el.classList.add("ok");
+  if (kind === "err") el.classList.add("err");
+}
+
+function fmtNumber(n) {
+  try { return Number(n).toLocaleString(); } catch { return n; }
+}
+
+// Map a few popular champion IDs (optional; extend as you wish)
+const CHAMP_NAMES = {
+  7: "LeBlanc",
+  268: "Azir",
+  517: "Sylas",
+  // add more if desired
 };
 
-// Small helper
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+// --- Riot Lookup form ---
+const lookupForm = $("#lookupForm");
+const lookupBtn = $("#lookupBtn");
+const lookupStatus = $("#lookupStatus");
+const results = $("#results");
+const summonerBlock = $("#summonerBlock");
+const championsBlock = $("#championsBlock");
 
-// ====== CONTACT FORM ======
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.querySelector('.contact-form-container');
-  const messageDiv = document.getElementById('form-message');
+lookupForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const summonerName = $("#summonerName").value.trim();
+  const region = $("#region").value.trim();
 
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const submitBtn = form.querySelector('.contact-submit-btn');
-      const name = form.name.value.trim();
-      const email = form.email.value.trim();
-      const message = form.message.value.trim();
-
-      // Basic validation
-      if (!name || !email || !message) {
-        showBanner(messageDiv, 'Please fill in your name, email, and a message.', 'error');
-        return;
-      }
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!emailOk) {
-        showBanner(messageDiv, 'Please enter a valid email address.', 'error');
-        return;
-      }
-
-      submitBtn.textContent = 'Sending...';
-      submitBtn.disabled = true;
-      messageDiv.style.display = 'none';
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(LAMBDA_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, message }),
-          mode: 'cors',
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        if (resp.ok) {
-          showBanner(messageDiv, 'Message sent successfully! Thank you for reaching out.', 'success');
-          form.reset();
-        } else {
-          let detail = '';
-          try { detail = await resp.text(); } catch {}
-          showBanner(messageDiv, 'Failed to send message. ' + (detail || 'Please try again.'), 'error');
-        }
-      } catch (err) {
-        showBanner(messageDiv, 'Network error. Please check your connection and try again.', 'error');
-      } finally {
-        submitBtn.textContent = 'Send Message';
-        submitBtn.disabled = false;
-      }
-    });
+  if (!summonerName || !/#/.test(summonerName)) {
+    setStatus(lookupStatus, "Please enter Riot ID as GameName#TAG", "err");
+    return;
   }
 
-  // ====== RIOT LOOKUP ======
-  const lookupBtn = document.getElementById('lookup-btn');
-  const summonerInput = document.getElementById('summoner-name');
-  const regionSelect = document.getElementById('region');
-  const lookupMessage = document.getElementById('lookup-message');
-  const resultsSection = document.getElementById('summoner-results');
-  const summonerInfoDiv = document.getElementById('summoner-info');
-  const champDiv = document.getElementById('champion-mastery');
+  lookupBtn.disabled = true;
+  setStatus(lookupStatus, "Fetching…");
 
-  if (lookupBtn && summonerInput && regionSelect) {
-    lookupBtn.addEventListener('click', async () => {
-      const riotId = (summonerInput.value || '').trim();
-      const region = regionSelect.value;
-
-      if (!riotId) {
-        showBanner(lookupMessage, 'Please enter a Riot ID', 'error');
-        return;
-      }
-      if (!riotId.includes('#')) {
-        showBanner(lookupMessage, 'Please use Riot ID format: GameName#TAG', 'error');
-        return;
-      }
-
-      lookupBtn.textContent = 'Looking up...';
-      lookupBtn.disabled = true;
-      lookupMessage.style.display = 'none';
-      if (resultsSection) resultsSection.style.display = 'none';
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000);
-
-        const resp = await fetch(LAMBDA_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            summonerName: riotId,
-            region: region
-          }),
-          mode: 'cors',
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        const data = await resp.json().catch(() => ({}));
-
-        if (!resp.ok) {
-          showBanner(lookupMessage, data?.error || 'Failed to fetch summoner data', 'error');
-        } else {
-          // Render results
-          if (summonerInfoDiv) {
-            summonerInfoDiv.innerHTML = `
-              <div class="summoner-card">
-                <h5>${data.summoner?.name ?? riotId}</h5>
-                <p>Level: ${data.summoner?.level ?? '—'}</p>
-              </div>
-            `;
-          }
-
-          if (champDiv) {
-            const champs = Array.isArray(data.topChampions) ? data.topChampions : [];
-            if (champs.length) {
-              champDiv.innerHTML = `
-                <h5>Top Champions</h5>
-                <div class="champions-grid">
-                  ${champs.slice(0,3).map(ch => `
-                    <div class="champion-card">
-                      <p><strong>Champion ID:</strong> ${ch.championId}</p>
-                      <p><strong>Mastery Level:</strong> ${ch.championLevel}</p>
-                      <p><strong>Mastery Points:</strong> ${Number(ch.championPoints).toLocaleString()}</p>
-                    </div>
-                  `).join('')}
-                </div>
-              `;
-            } else {
-              champDiv.innerHTML = '<p>No champion mastery data found.</p>';
-            }
-          }
-
-          if (resultsSection) resultsSection.style.display = 'block';
-          showBanner(lookupMessage, 'Summoner found!', 'success');
-        }
-      } catch (err) {
-        showBanner(lookupMessage, 'Network error. Please try again.', 'error');
-      } finally {
-        lookupBtn.textContent = 'Look Up Summoner';
-        lookupBtn.disabled = false;
-      }
+  try {
+    const res = await fetch(LAMBDA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ summonerName, region }),
     });
+
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text }; }
+
+    if (!res.ok) {
+      const msg = data?.error || `Request failed: ${res.status}`;
+      setStatus(lookupStatus, msg, "err");
+      results.hidden = true;
+      return;
+    }
+
+    // success
+    setStatus(lookupStatus, "Success!", "ok");
+    const { summoner, topChampions = [] } = data;
+
+    // render
+    summonerBlock.innerHTML = `
+      <div>Name: <strong>${summoner?.name || "—"}</strong></div>
+      <div>Level: <strong>${fmtNumber(summoner?.level ?? "—")}</strong></div>
+      <div><span class="muted">PUUID:</span> <code>${summoner?.puuid || "—"}</code></div>
+    `;
+
+    if (!Array.isArray(topChampions) || topChampions.length === 0) {
+      championsBlock.textContent = "No mastery data.";
+    } else {
+      championsBlock.innerHTML = topChampions
+        .slice(0, 3)
+        .map((c) => {
+          const name = CHAMP_NAMES[c.championId] || `Champion ${c.championId}`;
+          return `
+            <div class="card" style="padding:10px;border-radius:12px;background:rgba(10,15,25,.45);border:1px solid rgba(148,163,184,.12)">
+              <div><strong>${name}</strong> (ID: ${c.championId})</div>
+              <div>Mastery Level: ${fmtNumber(c.championLevel)}</div>
+              <div>Points: ${fmtNumber(c.championPoints)}</div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    results.hidden = false;
+  } catch (err) {
+    setStatus(lookupStatus, `Network error: ${err?.message || err}`, "err");
+    results.hidden = true;
+  } finally {
+    lookupBtn.disabled = false;
   }
 });
 
-// ====== UI helper ======
-function showBanner(node, text, type) {
-  if (!node) return;
-  node.textContent = text;
-  node.className = `lookup-message ${type}`;
-  node.style.display = 'block';
-  setTimeout(() => { node.style.display = 'none'; }, 10000);
-}
+// --- Contact/Demo form (optional; shows POST to same endpoint) ---
+const contactForm = $("#contactForm");
+const contactBtn = $("#contactBtn");
+const contactStatus = $("#contactStatus");
+
+contactForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  contactBtn.disabled = true;
+  setStatus(contactStatus, "Sending…");
+
+  const name = $("#contactName").value.trim();
+  const message = $("#contactMsg").value.trim();
+
+  try {
+    // This hits the same Lambda URL for demo; your backend can branch on payload shape if needed.
+    const res = await fetch(LAMBDA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, message, kind: "contact" }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      setStatus(contactStatus, `Failed: ${res.status} ${txt || ""}`, "err");
+      return;
+    }
+    setStatus(contactStatus, "Message sent (demo)!", "ok");
+  } catch (err) {
+    setStatus(contactStatus, `Network error: ${err?.message || err}`, "err");
+  } finally {
+    contactBtn.disabled = false;
+  }
+});
