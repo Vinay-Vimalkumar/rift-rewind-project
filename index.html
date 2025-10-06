@@ -21,26 +21,29 @@
         radial-gradient(900px 600px at 110% -10%, #1f1440 0%, transparent 60%),
         linear-gradient(180deg,#060a12 0%, #0a0f1a 60%, #070b12 100%);
     }
-    .wrap{max-width:1050px;margin:0 auto;padding:32px 20px}
-    header{display:flex;align-items:center;gap:14px;margin:8px 0 22px}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 18px}
+    header{display:flex;align-items:center;gap:14px;margin:8px 0 20px}
     .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 30px rgba(124,92,255,.4)}
     h1{font-size:28px;margin:0;letter-spacing:.2px}
     .tag{color:var(--muted);font-size:13px;margin-left:auto}
 
     .grid{display:grid;gap:18px}
-    @media (min-width:960px){ .grid{grid-template-columns:1.1fr .9fr} }
+    @media (min-width:980px){ .grid{grid-template-columns:1.05fr .95fr} }
 
     .card{
-      background:linear-gradient(180deg,rgba(13,20,32,.9),rgba(9,14,24,.8));
+      background:linear-gradient(180deg,rgba(13,20,32,.9),rgba(9,14,24,.82));
       border:1px solid rgba(110,120,160,.18); border-radius:18px; padding:18px 18px 16px;
       box-shadow:0 20px 45px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); backdrop-filter: blur(8px);
+      transition:transform .18s ease, box-shadow .25s ease, border-color .2s ease;
     }
+    .card:hover{transform:translateY(-1px); box-shadow:0 24px 48px rgba(124,92,255,.18)}
     label{font-size:13px;color:var(--muted);display:block;margin:0 0 8px}
     input,select,button{
       width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(148,163,184,.18);
       background:#0a1320; color:var(--text); font-size:14px; outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease, transform .05s ease;
     }
-    input:focus,select:focus{border-color:var(--accent)}
+    input:focus,select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,255,.18)}
     .row{display:grid;gap:12px}
     @media(min-width:560px){ .row-2{grid-template-columns:1fr 240px} }
 
@@ -48,8 +51,9 @@
       background:linear-gradient(135deg,var(--accent),var(--accent-2));
       color:#07111a; font-weight:800; letter-spacing:.25px; cursor:pointer; border:none;
       box-shadow:0 8px 30px rgba(124,92,255,.35), inset 0 1px 0 rgba(255,255,255,.4);
-      transition:transform .08s ease;
+      transition:transform .08s ease, filter .15s ease;
     }
+    .btn:hover{filter:brightness(1.05)}
     .btn:active{transform:translateY(1px)}
     .btn[disabled]{opacity:.65; cursor:not-allowed}
 
@@ -61,10 +65,11 @@
     .chip{
       font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(148,163,184,.18);
       color:var(--muted); cursor:pointer; user-select:none; background:rgba(12,18,30,.6);
+      transition:border-color .15s ease,color .15s ease,transform .08s ease;
     }
-    .chip:hover{border-color:rgba(124,92,255,.6); color:#cfe7ff}
+    .chip:hover{border-color:rgba(124,92,255,.6); color:#cfe7ff; transform:translateY(-1px)}
 
-    .section-title{margin:8px 0 8px; font-weight:800; letter-spacing:.2px}
+    .section-title{margin:10px 0 8px; font-weight:800; letter-spacing:.2px}
 
     .results{display:grid; gap:12px}
     .summoner{
@@ -84,7 +89,17 @@
     .champ .name{font-weight:700}
     .champ small{color:var(--muted)}
     .bar{height:7px;border-radius:8px;background:#0c1422;border:1px solid rgba(148,163,184,.16);overflow:hidden}
-    .bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent-2),var(--accent));}
+    .bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width .5s ease;}
+
+    /* bottom 4 cards grid */
+    .quad{display:grid; gap:12px; margin-top:12px}
+    @media (min-width:860px){ .quad{grid-template-columns:repeat(2,1fr)} }
+    .tile{padding:14px;border-radius:14px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
+    .tile h4{margin:0 0 8px;font-size:14px;letter-spacing:.2px}
+    .list{display:grid;gap:8px}
+    .rank-badge{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;
+      background:conic-gradient(var(--gold) calc(var(--p,0)*1%), #1a2234 0); border:2px solid rgba(148,163,184,.2)}
+    .rank-badge span{font-weight:800}
 
     /* skeletons */
     .skeleton{position:relative;overflow:hidden;background:rgba(14,22,36,.55);border-radius:14px;border:1px solid rgba(148,163,184,.12)}
@@ -112,7 +127,7 @@
     </header>
 
     <div class="grid">
-      <!-- LEFT: Lookup -->
+      <!-- LEFT: form -->
       <section class="card">
         <form id="lookupForm" novalidate>
           <div class="row row-2">
@@ -147,22 +162,51 @@
           <div class="chipbar" id="presetBar" aria-label="Pro presets"></div>
 
           <div class="row" style="margin-top:12px">
-            <button class="btn" id="lookupBtn" type="submit">Fetch Mastery</button>
+            <button class="btn" id="lookupBtn" type="submit">Fetch Insights</button>
             <div id="lookupStatus" class="status" role="status" aria-live="polite"></div>
           </div>
         </form>
       </section>
 
-      <!-- RIGHT: Results -->
+      <!-- RIGHT: results -->
       <section class="card">
-        <div class="section-title">Results</div>
+        <div class="section-title">Overview</div>
         <div id="results" class="results" hidden>
           <div id="summonerBlock" class="summoner"></div>
           <div class="section-title">Top Champions</div>
           <div id="championsBlock" class="champ-grid"></div>
+
+          <!-- bottom 4 cards -->
+          <div class="quad">
+            <div class="tile">
+              <h4>Ranked Solo/Duo</h4>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="rank-badge" id="rankBadge" style="--p:0"><span id="rankShort">—</span></div>
+                <div>
+                  <div id="rankLine">—</div>
+                  <div class="help" id="rankLP">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tile">
+              <h4>Recent Matches <button id="moreBtn" class="chip" style="float:right" type="button">+ more</button></h4>
+              <div id="matchList" class="list"></div>
+            </div>
+
+            <div class="tile">
+              <h4>Mastery Breakdown</h4>
+              <div id="masteryBreak" class="list"></div>
+            </div>
+
+            <div class="tile">
+              <h4>Activity</h4>
+              <div id="activity" class="list"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- skeletons shown while loading -->
+        <!-- skeletons -->
         <div id="skeletons" class="results" aria-hidden="true" hidden>
           <div class="skeleton" style="height:96px"></div>
           <div class="skeleton" style="height:92px"></div>
@@ -179,12 +223,11 @@
     </footer>
   </div>
 
-  <!-- expose your backend URL to JS BEFORE loading the script -->
+  <!-- expose backend URL BEFORE script -->
   <script>
     window.__RIOT_API_URL__ = "https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";
   </script>
-  <script src="./script.js?v=4"></script>
-
+  <script src="./script.js?v=7"></script>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

@@ -5,6 +5,13 @@ const LAMBDA_URL = window.__RIOT_API_URL__;
 const $ = (q) => document.querySelector(q);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 const nf = (n) => (Number.isFinite(+n) ? Number(n).toLocaleString() : n);
+const ago = (ms) => {
+  const d = Math.floor((Date.now() - ms) / 1000);
+  if (d < 60) return `${d}s ago`;
+  if (d < 3600) return `${Math.floor(d/60)}m ago`;
+  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  return `${Math.floor(d/86400)}d ago`;
+};
 
 function setStatus(msg, kind = "") {
   const el = $("#lookupStatus");
@@ -12,7 +19,6 @@ function setStatus(msg, kind = "") {
   el.classList.toggle("ok", kind === "ok");
   el.classList.toggle("err", kind === "err");
 }
-
 function toast(msg, kind = "ok") {
   const t = $("#toast");
   t.textContent = msg;
@@ -23,7 +29,7 @@ function toast(msg, kind = "ok") {
 
 // ------- Data Dragon (champ name+icon) -------
 let ddVersion = "14.19.1"; // fallback
-const champByKey = {}; // { "268": {id:"Azir", name:"Azir"} }
+const champByKey = {}; // key -> { id, name }
 
 async function loadChampions() {
   try {
@@ -32,7 +38,7 @@ async function loadChampions() {
     const data = await fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`).then(r => r.json());
     Object.values(data.data).forEach(c => (champByKey[c.key] = { id: c.id, name: c.name }));
   } catch (e) {
-    console.warn("DDragon load failed; using basic names", e);
+    console.warn("DDragon load failed, using fallback names");
   }
 }
 
@@ -63,7 +69,6 @@ function renderSummoner(s) {
 }
 
 function progressHTML(pointsSince, pointsUntil) {
-  // Some champs at max level return negative "until next". Clamp to 100% and label.
   let pct = 0, label = "";
   if (typeof pointsSince === "number" && typeof pointsUntil === "number") {
     const total = Math.max(pointsSince + pointsUntil, 1);
@@ -76,46 +81,81 @@ function progressHTML(pointsSince, pointsUntil) {
   `;
 }
 
-function renderChamps(arr = []) {
-  const grid = $("#championsBlock");
-  if (!arr.length) {
-    grid.innerHTML = `<div class="help">No mastery data.</div>`;
-    return;
-  }
-  const cards = arr.slice(0, 3).map(c => {
-    const info = champByKey[String(c.championId)] || {};
-    const img = info.id
-      ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${info.id}.png`
-      : `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/Aatrox.png`;
-    const name = info.name || `Champion ${c.championId}`;
-    return `
-      <div class="champ">
-        <img src="${img}" alt="${name} icon" loading="lazy"/>
-        <div>
-          <div class="name">${name}</div>
-          <small>Mastery ${nf(c.championLevel)} • ${nf(c.championPoints)} pts</small>
-          ${progressHTML(c.championPointsSinceLastLevel, c.championPointsUntilNextLevel)}
-        </div>
+function champCard(c) {
+  const info = champByKey[String(c.championId)] || {};
+  const img = info.id
+    ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${info.id}.png`
+    : `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/Aatrox.png`;
+  const name = info.name || `Champion ${c.championId}`;
+  return `
+    <div class="champ">
+      <img src="${img}" alt="${name} icon" loading="lazy"/>
+      <div>
+        <div class="name">${name}</div>
+        <small>Mastery ${nf(c.championLevel)} • ${nf(c.championPoints)} pts</small>
+        ${progressHTML(c.championPointsSinceLastLevel, c.championPointsUntilNextLevel)}
       </div>
-    `;
+    </div>
+  `;
+}
+
+function renderChamps(list = []) {
+  $("#championsBlock").innerHTML = list.slice(0,3).map(champCard).join("") || `<div class="help">No mastery data.</div>`;
+}
+
+function renderRanked(r) {
+  // r example: { tier: "CHALLENGER", rank: "I", leaguePoints: 600, wins: 100, losses: 50 }
+  const short = r?.tier ? `${r.tier?.[0] || "—"}${r?.rank || ""}` : "—";
+  $("#rankShort").textContent = short;
+  $("#rankLine").textContent = r?.tier ? `${r.tier} ${r.rank} • ${nf(r.wins)}W / ${nf(r.losses)}L` : "Unranked";
+  $("#rankLP").textContent = r?.tier ? `${nf(r.leaguePoints)} LP` : "—";
+  // badge progress: quick heuristic from LP (0-100)
+  const pct = Math.max(0, Math.min(100, (r?.leaguePoints ?? 0) % 100));
+  $("#rankBadge").style.setProperty("--p", pct);
+}
+
+function renderMatches(matches = []) {
+  // matches: [{queue, championId, k, d, a, win, duration, ts}]
+  $("#matchList").innerHTML = matches.slice(0,5).map(m => {
+    const info = champByKey[String(m.championId)] || {};
+    const name = info.name || `Champ ${m.championId}`;
+    const kda = `${m.k}/${m.d}/${m.a}`;
+    const outcome = m.win ? "W" : "L";
+    const dur = `${Math.round((m.duration || 0)/60)}m`;
+    return `<div class="chip" title="${new Date(m.ts).toLocaleString()}">${outcome} • ${name} • ${kda} • ${dur} • ${ago(m.ts)}</div>`;
+  }).join("") || `<div class="help">No recent matches.</div>`;
+}
+
+function renderMasteryBreakdown(list = []) {
+  const total = list.reduce((s,c)=>s + (c.championPoints||0), 0) || 1;
+  $("#masteryBreak").innerHTML = list.slice(0,3).map(c=>{
+    const info = champByKey[String(c.championId)] || {};
+    const name = info.name || `Champion ${c.championId}`;
+    const pct = Math.round((c.championPoints/total)*100);
+    return `<div class="chip">${name}: ${nf(c.championPoints)} pts (${pct}%)</div>`;
   }).join("");
-  grid.innerHTML = cards;
+}
+
+function renderActivity(list = []) {
+  $("#activity").innerHTML = list.slice(0,3).map(c=>{
+    const info = champByKey[String(c.championId)] || {};
+    const name = info.name || `Champion ${c.championId}`;
+    const when = c.lastPlayTime ? new Date(c.lastPlayTime).toLocaleString() : "—";
+    return `<div class="chip">${name} • last played ${when}</div>`;
+  }).join("") || `<div class="help">No activity found.</div>`;
 }
 
 // ------- fetch flow -------
-async function fetchMastery(summonerName, region) {
+async function fetchInsights(summonerName, region, opts = {}) {
+  const payload = { summonerName, region, matchesCount: opts.matchesCount || 5 };
   const res = await fetch(LAMBDA_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ summonerName, region }),
+    body: JSON.stringify(payload),
   });
-
   const text = await res.text();
   let data; try { data = JSON.parse(text); } catch { data = { error: text }; }
-
-  if (!res.ok) {
-    throw new Error(data?.error || `Request failed: ${res.status}`);
-  }
+  if (!res.ok) throw new Error(data?.error || `Request failed: ${res.status}`);
   return data;
 }
 
@@ -128,6 +168,23 @@ function showSkeletons(show) {
 async function init() {
   renderPresets();
   loadChampions().catch(()=>{});
+
+  on($("#moreBtn"), "click", async () => {
+    const summonerName = $("#summonerName").value.trim();
+    const region = $("#region").value.trim();
+    if (!summonerName || !/#/.test(summonerName)) return toast("Enter a Riot ID first", "err");
+
+    $("#moreBtn").disabled = true;
+    try {
+      const data = await fetchInsights(summonerName, region, { matchesCount: 10 });
+      renderMatches(data.recentMatches || []);
+      toast("Loaded more matches", "ok");
+    } catch(e) {
+      toast("Couldn’t load more matches", "err");
+    } finally {
+      $("#moreBtn").disabled = false;
+    }
+  });
 
   on($("#lookupForm"), "submit", async (e) => {
     e.preventDefault();
@@ -145,12 +202,18 @@ async function init() {
     showSkeletons(true);
 
     try {
-      const data = await fetchMastery(summonerName, region);
+      const data = await fetchInsights(summonerName, region, { matchesCount: 5 });
       setStatus("Success!", "ok");
+      $("#results").hidden = false;
+
       renderSummoner(data.summoner);
       renderChamps(data.topChampions || []);
-      $("#results").hidden = false;
-      toast("Fetched mastery ✔", "ok");
+      renderMasteryBreakdown(data.topChampions || []);
+      renderActivity(data.topChampions || []);
+      renderRanked(data.rankedSolo || null);
+      renderMatches(data.recentMatches || []);
+
+      toast("Insights updated ✔", "ok");
     } catch (err) {
       setStatus(String(err.message || err), "err");
       toast("Error: " + (err.message || err), "err");
@@ -160,5 +223,4 @@ async function init() {
     }
   });
 }
-
 document.addEventListener("DOMContentLoaded", init);
