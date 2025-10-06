@@ -7,10 +7,7 @@
   <meta name="description" content="Rift Rewind: Riot ID lookup and champion mastery viewer." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-  <!-- AOS animations (MIT) -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
-
   <style>
     :root{
       --bg:#070b12; --panel:#0d1420; --edge:#1d2a3b; --text:#e6edf5; --muted:#9fb0c6;
@@ -79,16 +76,18 @@
     .summoner{
       display:grid;gap:6px; padding:12px; border-radius:14px; background:rgba(14,22,36,.6); border:1px solid rgba(148,163,184,.14)
     }
+    .summoner code{word-break:break-all; white-space:normal;}
 
+    /* KPIs */
     .kpi-grid{display:grid;gap:8px;margin-top:10px}
     @media(min-width:560px){ .kpi-grid{grid-template-columns:repeat(3,1fr)} }
     .kpi{padding:10px 12px;border-radius:12px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
-    .kpi .big{font-size:18px;font-weight:800}
+    .kpi .big{font-size:18px;font-weight:800;line-height:1;}
     .kpi .sub{font-size:12px;color:var(--muted)}
 
+    /* champions */
     .champ-grid{display:grid; gap:12px}
     @media (min-width:560px){ .champ-grid{grid-template-columns:repeat(3,1fr)} }
-
     .champ{
       display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:center;
       padding:12px; border-radius:14px; background:rgba(12,20,34,.6); border:1px solid rgba(148,163,184,.14);
@@ -98,19 +97,31 @@
     .champ:hover{transform:translateY(-2px) rotateX(1.2deg) rotateY(-1.2deg); box-shadow:0 10px 28px rgba(124,92,255,.18)}
     .champ img{width:44px;height:44px;border-radius:10px;border:1px solid rgba(148,163,184,.18);object-fit:cover;background:#0b1422}
     .champ .name{font-weight:700}
-    .champ small{color:var(--muted)}
     .bar{height:7px;border-radius:8px;background:#0c1422;border:1px solid rgba(148,163,184,.16);overflow:hidden}
     .bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width .5s ease;}
 
-    /* two-rows of tiles below */
-    .pairs{display:grid;gap:12px;margin-top:12px}
-    @media(min-width:860px){ .pairs{grid-template-columns:repeat(2,1fr)} }
+    /* tiles (exactly 4) */
+    .pairs{display:grid;gap:12px;margin-top:12px;grid-template-columns:repeat(2,1fr)}
     .tile{padding:14px;border-radius:14px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
     .tile h4{margin:0 0 8px;font-size:14px;letter-spacing:.2px}
     .list{display:grid;gap:8px}
+
+    /* ranked circle */
     .rank-badge{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;
       background:conic-gradient(var(--gold) calc(var(--p,0)*1%), #1a2234 0); border:2px solid rgba(148,163,184,.2)}
     .rank-badge span{font-weight:800}
+
+    /* recent matches list */
+    .matches{display:grid;gap:8px}
+    .match{
+      display:grid;grid-template-columns:28px 40px 1fr;align-items:center;gap:10px;
+      padding:8px 10px;border:1px solid rgba(148,163,184,.14);border-radius:12px;background:rgba(11,18,30,.5)
+    }
+    .match img{width:40px;height:40px;border-radius:10px;border:1px solid rgba(148,163,184,.18);object-fit:cover}
+    .badge{width:28px;height:28px;border-radius:999px;display:grid;place-items:center;font-weight:800;font-size:12px}
+    .badge.win{background:rgba(52,211,153,.18);border:1px solid rgba(52,211,153,.5);color:#34d399}
+    .badge.loss{background:rgba(251,113,133,.18);border:1px solid rgba(251,113,133,.5);color:#fb7185}
+    .muted2{color:var(--muted);font-size:12px}
 
     /* skeletons */
     .skeleton{position:relative;overflow:hidden;background:rgba(14,22,36,.55);border-radius:14px;border:1px solid rgba(148,163,184,.12)}
@@ -121,16 +132,14 @@
     }
     @keyframes sheen{to{transform:translateX(100%)}}
 
-    .toast{position:fixed; right:18px; bottom:18px; background:#0f1729; border:1px solid rgba(148,163,184,.18);
-      color:var(--text); padding:12px 14px; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.35); display:none}
-    .toast.ok{border-color:rgba(52,211,153,.45)} .toast.err{border-color:rgba(251,113,133,.45)}
-
     footer{margin-top:22px;color:var(--muted);font-size:12px;text-align:center}
     .pill{display:inline-block;padding:6px 10px;border:1px solid rgba(148,163,184,.18); border-radius:999px; font-size:12px; color:var(--muted)}
-
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
     .mini{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:#0a1320;color:var(--text);cursor:pointer}
     .mini:hover{border-color:rgba(124,92,255,.5)}
+
+    /* small layout polish */
+    .pairs > .tile:empty{display:none}
   </style>
 </head>
 <body>
@@ -189,7 +198,6 @@
         <div id="results" class="results" hidden data-aos="fade-up">
           <div id="summonerBlock" class="summoner"></div>
 
-          <!-- KPIs -->
           <div class="kpi-grid" id="kpis" aria-hidden="true">
             <div class="kpi"><div class="big" id="kpiWinrate">—</div><div class="sub">Recent winrate</div></div>
             <div class="kpi"><div class="big" id="kpiKDA">—</div><div class="sub">Average KDA</div></div>
@@ -199,7 +207,6 @@
           <div class="section-title">Top Champions</div>
           <div id="championsBlock" class="champ-grid"></div>
 
-          <!-- two rows of tiles (only 4 tiles total) -->
           <div class="pairs">
             <div class="tile" data-aos="fade-up">
               <h4>Ranked Solo/Duo</h4>
@@ -214,7 +221,7 @@
 
             <div class="tile" data-aos="fade-up">
               <h4>Recent Matches <button id="moreBtn" class="chip" style="float:right" type="button">+ more</button></h4>
-              <div id="matchList" class="list"></div>
+              <div id="matchList" class="matches"></div>
             </div>
 
             <div class="tile" data-aos="fade-up">
@@ -229,7 +236,7 @@
           </div>
         </div>
 
-        <!-- slim skeletons while loading -->
+        <!-- slim skeletons -->
         <div id="skeletons" class="results" aria-hidden="true" hidden>
           <div class="skeleton" style="height:96px"></div>
           <div class="skeleton" style="height:120px"></div>
@@ -244,23 +251,18 @@
     </footer>
   </div>
 
-  <!-- expose backend URL BEFORE script -->
-  <script>
-    window.__RIOT_API_URL__ = "https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";
-  </script>
+  <!-- set your Lambda URL here -->
+  <script>window.__RIOT_API_URL__="https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";</script>
 
-  <!-- AOS + Motion One (MIT) -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script type="module">
     import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@latest/+esm";
-    window.motionAnimate = animate;
-    window.motionStagger = stagger;
+    window.motionAnimate = animate; window.motionStagger = stagger;
     AOS.init({ duration: 650, easing: 'ease-out-cubic', once: true, offset: 12 });
   </script>
 
-  <!-- your app -->
-  <script src="./script.js?v=9"></script>
-
+  <!-- bump the ?v when you want to bust cache -->
+  <script src="./script.js?v=12"></script>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
