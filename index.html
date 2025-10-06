@@ -7,6 +7,10 @@
   <meta name="description" content="Rift Rewind: Riot ID lookup and champion mastery viewer." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- AOS animations (MIT) -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+
   <style>
     :root{
       --bg:#070b12; --panel:#0d1420; --edge:#1d2a3b; --text:#e6edf5; --muted:#9fb0c6;
@@ -83,8 +87,9 @@
       display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:center;
       padding:12px; border-radius:14px; background:rgba(12,20,34,.6); border:1px solid rgba(148,163,184,.14);
       transition:transform .12s ease, box-shadow .2s ease;
+      transform-style: preserve-3d; will-change: transform;
     }
-    .champ:hover{transform:translateY(-2px); box-shadow:0 10px 28px rgba(124,92,255,.18)}
+    .champ:hover{transform:translateY(-2px) rotateX(1.2deg) rotateY(-1.2deg); box-shadow:0 10px 28px rgba(124,92,255,.18)}
     .champ img{width:44px;height:44px;border-radius:10px;border:1px solid rgba(148,163,184,.18);object-fit:cover;background:#0b1422}
     .champ .name{font-weight:700}
     .champ small{color:var(--muted)}
@@ -120,7 +125,7 @@
 </head>
 <body>
   <div class="wrap">
-    <header>
+    <header data-aos="fade-down">
       <div class="logo" aria-hidden="true"></div>
       <h1>Rift Rewind — Riot ID Lookup</h1>
       <span class="tag">serverless • global • free-tier</span>
@@ -128,7 +133,7 @@
 
     <div class="grid">
       <!-- LEFT: form -->
-      <section class="card">
+      <section class="card" data-aos="fade-right">
         <form id="lookupForm" novalidate>
           <div class="row row-2">
             <div>
@@ -169,16 +174,16 @@
       </section>
 
       <!-- RIGHT: results -->
-      <section class="card">
+      <section class="card" data-aos="fade-left">
         <div class="section-title">Overview</div>
-        <div id="results" class="results" hidden>
+        <div id="results" class="results" hidden data-aos="fade-up">
           <div id="summonerBlock" class="summoner"></div>
           <div class="section-title">Top Champions</div>
           <div id="championsBlock" class="champ-grid"></div>
 
           <!-- bottom 4 cards -->
           <div class="quad">
-            <div class="tile">
+            <div class="tile" data-aos="fade-up">
               <h4>Ranked Solo/Duo</h4>
               <div style="display:flex;align-items:center;gap:12px">
                 <div class="rank-badge" id="rankBadge" style="--p:0"><span id="rankShort">—</span></div>
@@ -189,17 +194,17 @@
               </div>
             </div>
 
-            <div class="tile">
+            <div class="tile" data-aos="fade-up">
               <h4>Recent Matches <button id="moreBtn" class="chip" style="float:right" type="button">+ more</button></h4>
               <div id="matchList" class="list"></div>
             </div>
 
-            <div class="tile">
+            <div class="tile" data-aos="fade-up">
               <h4>Mastery Breakdown</h4>
               <div id="masteryBreak" class="list"></div>
             </div>
 
-            <div class="tile">
+            <div class="tile" data-aos="fade-up">
               <h4>Activity</h4>
               <div id="activity" class="list"></div>
             </div>
@@ -227,7 +232,19 @@
   <script>
     window.__RIOT_API_URL__ = "https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";
   </script>
-  <script src="./script.js?v=7"></script>
+
+  <!-- AOS + Motion One (MIT) -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@latest/+esm";
+    window.motionAnimate = animate;
+    window.motionStagger = stagger;
+    AOS.init({ duration: 650, easing: 'ease-out-cubic', once: true, offset: 12 });
+  </script>
+
+  <!-- your app -->
+  <script src="./script.js?v=8"></script>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

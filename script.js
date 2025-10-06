@@ -101,21 +101,25 @@ function champCard(c) {
 
 function renderChamps(list = []) {
   $("#championsBlock").innerHTML = list.slice(0,3).map(champCard).join("") || `<div class="help">No mastery data.</div>`;
+  // nice stagger-in
+  if (window.motionAnimate && window.motionStagger) {
+    window.motionAnimate("#championsBlock .champ",
+      { opacity: [0, 1], transform: ["translateY(8px)", "translateY(0)"] },
+      { duration: 0.45, delay: window.motionStagger(0.06), easing: "ease-out" }
+    );
+  }
 }
 
 function renderRanked(r) {
-  // r example: { tier: "CHALLENGER", rank: "I", leaguePoints: 600, wins: 100, losses: 50 }
   const short = r?.tier ? `${r.tier?.[0] || "—"}${r?.rank || ""}` : "—";
   $("#rankShort").textContent = short;
   $("#rankLine").textContent = r?.tier ? `${r.tier} ${r.rank} • ${nf(r.wins)}W / ${nf(r.losses)}L` : "Unranked";
   $("#rankLP").textContent = r?.tier ? `${nf(r.leaguePoints)} LP` : "—";
-  // badge progress: quick heuristic from LP (0-100)
   const pct = Math.max(0, Math.min(100, (r?.leaguePoints ?? 0) % 100));
   $("#rankBadge").style.setProperty("--p", pct);
 }
 
 function renderMatches(matches = []) {
-  // matches: [{queue, championId, k, d, a, win, duration, ts}]
   $("#matchList").innerHTML = matches.slice(0,5).map(m => {
     const info = champByKey[String(m.championId)] || {};
     const name = info.name || `Champ ${m.championId}`;
@@ -213,6 +217,10 @@ async function init() {
       renderRanked(data.rankedSolo || null);
       renderMatches(data.recentMatches || []);
 
+      // subtle pop-in
+      if (window.motionAnimate) {
+        window.motionAnimate("#results", { opacity: [0, 1], transform: ["scale(.98)", "scale(1)"] }, { duration: 0.25 });
+      }
       toast("Insights updated ✔", "ok");
     } catch (err) {
       setStatus(String(err.message || err), "err");
