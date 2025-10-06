@@ -1,7 +1,5 @@
-// ------- config -------
 const LAMBDA_URL = window.__RIOT_API_URL__;
 
-// ------- dom helpers -------
 const $ = (q) => document.querySelector(q);
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 const nf = (n) => (Number.isFinite(+n) ? Number(n).toLocaleString() : n);
@@ -27,9 +25,8 @@ function toast(msg, kind = "ok") {
   setTimeout(() => (t.style.display = "none"), 2200);
 }
 
-// ------- Data Dragon (champ name+icon) -------
-let ddVersion = "14.19.1"; // fallback
-const champByKey = {}; // key -> { id, name }
+let ddVersion = "14.19.1";
+const champByKey = {};
 
 async function loadChampions() {
   try {
@@ -42,7 +39,6 @@ async function loadChampions() {
   }
 }
 
-// ------- UI: Pro presets -------
 const PRESETS = [
   { label: "Faker", id: "Hide on bush#KR1", region: "kr" },
   { label: "Chovy", id: "Chovy#KR1", region: "kr" },
@@ -62,13 +58,10 @@ function renderPresets() {
   );
 }
 
-// ------- renderers -------
 function renderSummoner(s) {
   const id = s?.name || "—";
   const puuid = s?.puuid || "—";
   const [gameName, tagLine] = (id.includes("#") ? id.split("#") : [id, ""]).map(String);
-
-  // actions: copy and op.gg
   const opggRegion = mapToOpgg($("#region").value.trim());
   const opggURL =
     gameName && tagLine && opggRegion
@@ -142,7 +135,6 @@ function renderChamps(list = []) {
 }
 
 function renderRanked(r) {
-  // If no ranked data, explicitly show Unranked (common for many pro IDs).
   const short = r?.tier ? `${r.tier?.[0] || "—"}${r?.rank || ""}` : "—";
   $("#rankShort").textContent = short;
   $("#rankLine").textContent = r?.tier
@@ -153,7 +145,6 @@ function renderRanked(r) {
   $("#rankBadge").style.setProperty("--p", pct);
 }
 
-// --------- NEW: richer recent matches list (icons + W/L + time ago) ----------
 function renderMatches(matches = []) {
   const html =
     matches
@@ -209,7 +200,6 @@ function renderActivity(list = []) {
       .join("") || `<div class="help">No activity found.</div>`;
 }
 
-// ------- KPIs (winrate, KDA, duration) -------
 function renderKPIs(matches = []) {
   if (!Array.isArray(matches) || matches.length === 0) {
     $("#kpis").setAttribute("aria-hidden", "true");
@@ -244,7 +234,6 @@ function renderKPIs(matches = []) {
   $("#kpiDuration").textContent = `${avgMin}m`;
 }
 
-// ------- fetch flow -------
 async function fetchInsights(summonerName, region, opts = {}) {
   const payload = { summonerName, region, matchesCount: opts.matchesCount || 5 };
   const res = await fetch(LAMBDA_URL, {
@@ -269,7 +258,6 @@ function showSkeletons(show) {
 }
 
 function mapToOpgg(region) {
-  // op.gg uses slightly different slugs for some regions
   const m = {
     na1: "na",
     kr: "kr",
@@ -291,17 +279,14 @@ function mapToOpgg(region) {
   return m[region] || region;
 }
 
-// Remove ghost/empty tiles (handles extra boxes in older HTML)
 function pruneEmptyTiles() {
   document.querySelectorAll(".pairs .tile").forEach((tile) => {
-    // If there's no element after the <h4> header OR content is blank, remove it
     const afterHeader = tile.querySelector("h4 ~ *");
     const text = tile.textContent.replace(/\s+/g, "");
     if (!afterHeader && !text) tile.remove();
   });
 }
 
-// ------- wire up -------
 async function init() {
   renderPresets();
   loadChampions().catch(() => {});
@@ -352,7 +337,7 @@ async function init() {
       renderMatches(data.recentMatches || []);
       renderKPIs(data.recentMatches || []);
 
-      pruneEmptyTiles(); // <- clears the extra two boxes if your HTML still has them
+      pruneEmptyTiles();
 
       if (window.motionAnimate) {
         window.motionAnimate(

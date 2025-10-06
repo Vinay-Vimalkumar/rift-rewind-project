@@ -78,14 +78,12 @@
     }
     .summoner code{word-break:break-all; white-space:normal;}
 
-    /* KPIs */
     .kpi-grid{display:grid;gap:8px;margin-top:10px}
     @media(min-width:560px){ .kpi-grid{grid-template-columns:repeat(3,1fr)} }
     .kpi{padding:10px 12px;border-radius:12px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
     .kpi .big{font-size:18px;font-weight:800;line-height:1;}
     .kpi .sub{font-size:12px;color:var(--muted)}
 
-    /* champions */
     .champ-grid{display:grid; gap:12px}
     @media (min-width:560px){ .champ-grid{grid-template-columns:repeat(3,1fr)} }
     .champ{
@@ -100,18 +98,15 @@
     .bar{height:7px;border-radius:8px;background:#0c1422;border:1px solid rgba(148,163,184,.16);overflow:hidden}
     .bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width .5s ease;}
 
-    /* tiles (exactly 4) */
     .pairs{display:grid;gap:12px;margin-top:12px;grid-template-columns:repeat(2,1fr)}
     .tile{padding:14px;border-radius:14px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
     .tile h4{margin:0 0 8px;font-size:14px;letter-spacing:.2px}
     .list{display:grid;gap:8px}
 
-    /* ranked circle */
     .rank-badge{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;
       background:conic-gradient(var(--gold) calc(var(--p,0)*1%), #1a2234 0); border:2px solid rgba(148,163,184,.2)}
     .rank-badge span{font-weight:800}
 
-    /* recent matches list */
     .matches{display:grid;gap:8px}
     .match{
       display:grid;grid-template-columns:28px 40px 1fr;align-items:center;gap:10px;
@@ -123,7 +118,6 @@
     .badge.loss{background:rgba(251,113,133,.18);border:1px solid rgba(251,113,133,.5);color:#fb7185}
     .muted2{color:var(--muted);font-size:12px}
 
-    /* skeletons */
     .skeleton{position:relative;overflow:hidden;background:rgba(14,22,36,.55);border-radius:14px;border:1px solid rgba(148,163,184,.12)}
     .skeleton::after{
       content:""; position:absolute; inset:0;
@@ -138,7 +132,6 @@
     .mini{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:#0a1320;color:var(--text);cursor:pointer}
     .mini:hover{border-color:rgba(124,92,255,.5)}
 
-    /* small layout polish */
     .pairs > .tile:empty{display:none}
   </style>
 </head>
@@ -151,7 +144,6 @@
     </header>
 
     <div class="grid">
-      <!-- LEFT: form -->
       <section class="card" data-aos="fade-right">
         <form id="lookupForm" novalidate>
           <div class="row row-2">
@@ -192,7 +184,6 @@
         </form>
       </section>
 
-      <!-- RIGHT: results -->
       <section class="card" data-aos="fade-left">
         <div class="section-title">Overview</div>
         <div id="results" class="results" hidden data-aos="fade-up">
@@ -236,7 +227,6 @@
           </div>
         </div>
 
-        <!-- slim skeletons -->
         <div id="skeletons" class="results" aria-hidden="true" hidden>
           <div class="skeleton" style="height:96px"></div>
           <div class="skeleton" style="height:120px"></div>
@@ -251,7 +241,6 @@
     </footer>
   </div>
 
-  <!-- set your Lambda URL here -->
   <script>window.__RIOT_API_URL__="https://anbqqriwd2ysbwxyquqspqg7ee0xwrcp.lambda-url.us-east-1.on.aws/";</script>
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
@@ -261,7 +250,6 @@
     AOS.init({ duration: 650, easing: 'ease-out-cubic', once: true, offset: 12 });
   </script>
 
-  <!-- bump the ?v when you want to bust cache -->
   <script src="./script.js?v=12"></script>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
