@@ -80,6 +80,12 @@
       display:grid;gap:6px; padding:12px; border-radius:14px; background:rgba(14,22,36,.6); border:1px solid rgba(148,163,184,.14)
     }
 
+    .kpi-grid{display:grid;gap:8px;margin-top:10px}
+    @media(min-width:560px){ .kpi-grid{grid-template-columns:repeat(3,1fr)} }
+    .kpi{padding:10px 12px;border-radius:12px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
+    .kpi .big{font-size:18px;font-weight:800}
+    .kpi .sub{font-size:12px;color:var(--muted)}
+
     .champ-grid{display:grid; gap:12px}
     @media (min-width:560px){ .champ-grid{grid-template-columns:repeat(3,1fr)} }
 
@@ -96,9 +102,9 @@
     .bar{height:7px;border-radius:8px;background:#0c1422;border:1px solid rgba(148,163,184,.16);overflow:hidden}
     .bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width .5s ease;}
 
-    /* bottom 4 cards grid */
-    .quad{display:grid; gap:12px; margin-top:12px}
-    @media (min-width:860px){ .quad{grid-template-columns:repeat(2,1fr)} }
+    /* two-rows of tiles below */
+    .pairs{display:grid;gap:12px;margin-top:12px}
+    @media(min-width:860px){ .pairs{grid-template-columns:repeat(2,1fr)} }
     .tile{padding:14px;border-radius:14px;background:rgba(12,20,34,.6);border:1px solid rgba(148,163,184,.14)}
     .tile h4{margin:0 0 8px;font-size:14px;letter-spacing:.2px}
     .list{display:grid;gap:8px}
@@ -121,6 +127,10 @@
 
     footer{margin-top:22px;color:var(--muted);font-size:12px;text-align:center}
     .pill{display:inline-block;padding:6px 10px;border:1px solid rgba(148,163,184,.18); border-radius:999px; font-size:12px; color:var(--muted)}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .mini{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:#0a1320;color:var(--text);cursor:pointer}
+    .mini:hover{border-color:rgba(124,92,255,.5)}
   </style>
 </head>
 <body>
@@ -178,11 +188,19 @@
         <div class="section-title">Overview</div>
         <div id="results" class="results" hidden data-aos="fade-up">
           <div id="summonerBlock" class="summoner"></div>
+
+          <!-- KPIs -->
+          <div class="kpi-grid" id="kpis" aria-hidden="true">
+            <div class="kpi"><div class="big" id="kpiWinrate">—</div><div class="sub">Recent winrate</div></div>
+            <div class="kpi"><div class="big" id="kpiKDA">—</div><div class="sub">Average KDA</div></div>
+            <div class="kpi"><div class="big" id="kpiDuration">—</div><div class="sub">Avg game duration</div></div>
+          </div>
+
           <div class="section-title">Top Champions</div>
           <div id="championsBlock" class="champ-grid"></div>
 
-          <!-- bottom 4 cards -->
-          <div class="quad">
+          <!-- two rows of tiles (only 4 tiles total) -->
+          <div class="pairs">
             <div class="tile" data-aos="fade-up">
               <h4>Ranked Solo/Duo</h4>
               <div style="display:flex;align-items:center;gap:12px">
@@ -211,12 +229,10 @@
           </div>
         </div>
 
-        <!-- skeletons -->
+        <!-- slim skeletons while loading -->
         <div id="skeletons" class="results" aria-hidden="true" hidden>
           <div class="skeleton" style="height:96px"></div>
-          <div class="skeleton" style="height:92px"></div>
-          <div class="skeleton" style="height:92px"></div>
-          <div class="skeleton" style="height:92px"></div>
+          <div class="skeleton" style="height:120px"></div>
         </div>
       </section>
     </div>
@@ -243,7 +259,7 @@
   </script>
 
   <!-- your app -->
-  <script src="./script.js?v=8"></script>
+  <script src="./script.js?v=9"></script>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

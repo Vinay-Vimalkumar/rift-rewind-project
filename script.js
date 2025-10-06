@@ -62,10 +62,29 @@ function renderPresets() {
 
 // ------- renderers -------
 function renderSummoner(s) {
+  const id = s?.name || "—";
+  const puuid = s?.puuid || "—";
+  const [gameName, tagLine] = (id.includes("#") ? id.split("#") : [id, ""]).map(String);
+
+  // actions: copy and op.gg
+  const opggRegion = mapToOpgg($("#region").value.trim());
+  const opggURL = (gameName && tagLine && opggRegion)
+    ? `https://www.op.gg/summoners/${opggRegion}/${encodeURIComponent(gameName)}-${encodeURIComponent(tagLine)}`
+    : null;
+
   $("#summonerBlock").innerHTML = `
-    <div><strong>${s?.name ?? "—"}</strong> <span style="color:var(--gold)">★</span> Level ${nf(s?.level ?? 0)}</div>
-    <div class="help"><span class="muted">PUUID:</span> <code>${s?.puuid ?? "—"}</code></div>
+    <div><strong>${id}</strong> <span style="color:var(--gold)">★</span> Level ${nf(s?.level ?? 0)}</div>
+    <div class="help"><span class="muted">PUUID:</span> <code id="puuidText">${puuid}</code></div>
+    <div class="actions">
+      <button class="mini" id="copyPuuid" type="button">Copy PUUID</button>
+      ${opggURL ? `<a class="mini" id="opggLink" href="${opggURL}" target="_blank" rel="noopener">View on OP.GG ↗</a>` : ``}
+    </div>
   `;
+
+  on($("#copyPuuid"), "click", async () => {
+    try { await navigator.clipboard.writeText(puuid); toast("PUUID copied", "ok"); }
+    catch { toast("Couldn’t copy", "err"); }
+  });
 }
 
 function progressHTML(pointsSince, pointsUntil) {
@@ -101,7 +120,6 @@ function champCard(c) {
 
 function renderChamps(list = []) {
   $("#championsBlock").innerHTML = list.slice(0,3).map(champCard).join("") || `<div class="help">No mastery data.</div>`;
-  // nice stagger-in
   if (window.motionAnimate && window.motionStagger) {
     window.motionAnimate("#championsBlock .champ",
       { opacity: [0, 1], transform: ["translateY(8px)", "translateY(0)"] },
@@ -149,6 +167,31 @@ function renderActivity(list = []) {
   }).join("") || `<div class="help">No activity found.</div>`;
 }
 
+// ------- KPIs (winrate, KDA, duration) -------
+function renderKPIs(matches = []) {
+  if (!Array.isArray(matches) || matches.length === 0) {
+    $("#kpis").setAttribute("aria-hidden", "true");
+    $("#kpiWinrate").textContent = "—";
+    $("#kpiKDA").textContent = "—";
+    $("#kpiDuration").textContent = "—";
+    return;
+  }
+  const total = matches.length;
+  const wins = matches.filter(m => m.win).length;
+  const wr = Math.round((wins/total)*100);
+
+  let k=0,d=0,a=0, dur=0;
+  matches.forEach(m => { k+=m.k||0; d+=m.d||0; a+=m.a||0; dur+=m.duration||0; });
+  const avgK = k/total, avgD = d/total, avgA = a/total;
+  const kda = (avgD === 0) ? (avgK+avgA).toFixed(2) : ((avgK+avgA)/avgD).toFixed(2);
+  const avgMin = Math.round((dur/total)/60);
+
+  $("#kpis").removeAttribute("aria-hidden");
+  $("#kpiWinrate").textContent = wr + "%";
+  $("#kpiKDA").textContent = `${kda}:1`;
+  $("#kpiDuration").textContent = `${avgMin}m`;
+}
+
 // ------- fetch flow -------
 async function fetchInsights(summonerName, region, opts = {}) {
   const payload = { summonerName, region, matchesCount: opts.matchesCount || 5 };
@@ -168,6 +211,16 @@ function showSkeletons(show) {
   $("#results").hidden = show;
 }
 
+function mapToOpgg(region){
+  // op.gg uses slightly different slugs for some regions
+  const m = {
+    "na1":"na", "kr":"kr", "euw1":"euw", "eun1":"eune", "br1":"br",
+    "la1":"lan", "la2":"las", "jp1":"jp", "tr1":"tr", "ru":"ru",
+    "oc1":"oce", "ph2":"ph", "sg2":"sg", "th2":"th", "tw2":"tw", "vn2":"vn"
+  };
+  return m[region] || region;
+}
+
 // ------- wire up -------
 async function init() {
   renderPresets();
@@ -182,6 +235,7 @@ async function init() {
     try {
       const data = await fetchInsights(summonerName, region, { matchesCount: 10 });
       renderMatches(data.recentMatches || []);
+      renderKPIs(data.recentMatches || []);
       toast("Loaded more matches", "ok");
     } catch(e) {
       toast("Couldn’t load more matches", "err");
@@ -216,8 +270,8 @@ async function init() {
       renderActivity(data.topChampions || []);
       renderRanked(data.rankedSolo || null);
       renderMatches(data.recentMatches || []);
+      renderKPIs(data.recentMatches || []);
 
-      // subtle pop-in
       if (window.motionAnimate) {
         window.motionAnimate("#results", { opacity: [0, 1], transform: ["scale(.98)", "scale(1)"] }, { duration: 0.25 });
       }
